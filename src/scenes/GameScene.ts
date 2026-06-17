@@ -3,7 +3,7 @@ import { AI_PROFILES, AiController } from '../Ai';
 import { Card, CARD_CLICKED } from '../Card';
 import { Player, PLAYER_COLORS } from '../Player';
 import { BACK_GRADIENTS } from '../gradients';
-import { SYMBOLS } from '../symbols';
+import { SYMBOL_SETS } from '../symbols';
 import { GRIDS, loadSettings, TURN_SECONDS } from '../settings';
 import { Button } from '../ui';
 import { CARD_TEX_H, CARD_TEX_W, createBackTexture, frontKey, FRONT_VARIANTS } from '../textures';
@@ -14,6 +14,8 @@ const MEMORIZE_SECONDS = 5;
 const MISMATCH_SHOW_MS = 900;
 const AI_FIRST_PICK_MS = 800;
 const AI_SECOND_PICK_MS = 900;
+const FLIP_STAGGER_MS = 25;
+const FLIP_FIXED_TIME_BUFFER = 400;
 const CARD_ASPECT = CARD_TEX_W / CARD_TEX_H;
 
 const HUD_TOP = 16;
@@ -72,7 +74,11 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    this.createBoard(GRIDS[settings.grid].rows, GRIDS[settings.grid].cols);
+    this.createBoard(
+      GRIDS[settings.grid].rows,
+      GRIDS[settings.grid].cols,
+      SYMBOL_SETS[settings.symbolSet].symbols,
+    );
     this.cards.forEach((card) => card.setFace(false));
     this.activeIdx = Phaser.Math.Between(0, this.players.length - 1);
     this.createHud();
@@ -82,7 +88,7 @@ export class GameScene extends Phaser.Scene {
 
   // ── setup ────────────────────────────────────────────────────────────
 
-  private createBoard(rows: number, cols: number): void {
+  private createBoard(rows: number, cols: number, symbolPool: readonly string[]): void {
     const { width, height } = this.scale;
     const gap = 12;
     const margin = 30;
@@ -101,7 +107,7 @@ export class GameScene extends Phaser.Scene {
     const startY = BOARD_TOP + (availH - boardH) / 2 + cardH / 2;
 
     const pairCount = (rows * cols) / 2;
-    const symbols = Phaser.Utils.Array.Shuffle([...SYMBOLS]).slice(0, pairCount);
+    const symbols = Phaser.Utils.Array.Shuffle([...symbolPool]).slice(0, pairCount);
     const deck = Phaser.Utils.Array.Shuffle([...symbols, ...symbols]);
 
     deck.forEach((symbol, i) => {
@@ -165,7 +171,7 @@ export class GameScene extends Phaser.Scene {
       'Skip turn',
       () => this.onSkip(),
       { width: 150, height: 48, fontSize: 20 },
-    ).setEnabled(false) as Button;
+    ).setEnabled(false);
 
     new Button(this, 100, HUD_TOP + PANEL_H / 2, 'Menu', () => this.scene.start('MainMenu'), {
       width: 150,
@@ -239,9 +245,12 @@ export class GameScene extends Phaser.Scene {
     this.beginPopup = undefined;
     this.msgText.setText('');
     this.cards.forEach((card, i) => {
-      this.time.delayedCall(i * 25, () => void card.flip(true));
+      this.time.delayedCall(i * FLIP_STAGGER_MS, () => void card.flip(true));
     });
-    this.time.delayedCall(this.cards.length * 25 + 400, () => this.startMemorizePhase());
+    this.time.delayedCall(
+      this.cards.length * FLIP_STAGGER_MS + FLIP_FIXED_TIME_BUFFER,
+      () => this.startMemorizePhase(),
+    );
   }
 
   // ── memorize phase ───────────────────────────────────────────────────
@@ -271,9 +280,12 @@ export class GameScene extends Phaser.Scene {
   private flipAllDownAndBegin(): void {
     this.msgText.setText('');
     this.cards.forEach((card, i) => {
-      this.time.delayedCall(i * 25, () => void card.flip(false));
+      this.time.delayedCall(i * FLIP_STAGGER_MS, () => void card.flip(false));
     });
-    this.time.delayedCall(this.cards.length * 25 + 400, () => this.startTurn());
+    this.time.delayedCall(
+      this.cards.length * FLIP_STAGGER_MS + FLIP_FIXED_TIME_BUFFER,
+      () => this.startTurn(),
+    );
   }
 
   // ── turn flow ────────────────────────────────────────────────────────

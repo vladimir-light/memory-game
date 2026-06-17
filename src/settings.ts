@@ -1,4 +1,5 @@
 import type { PlayerType } from './Player';
+import { DEFAULT_SYMBOL_SET, SYMBOL_SETS, type SymbolSetKey } from './symbols';
 
 export type GridKey = '4x4' | '4x6' | '6x6';
 
@@ -28,6 +29,8 @@ export interface GameSettings {
   playerTypes: PlayerType[];
   /** Memory strength of all computer opponents. */
   aiDifficulty: AiDifficulty;
+  /** Which emoji pool the cards are drawn from. */
+  symbolSet: SymbolSetKey;
 }
 
 const STORAGE_KEY = 'memory-phaser-settings';
@@ -38,6 +41,7 @@ const DEFAULTS: GameSettings = {
   turnTimer: false,
   playerTypes: ['human', 'human', 'human', 'human'],
   aiDifficulty: 'medium',
+  symbolSet: DEFAULT_SYMBOL_SET,
 };
 
 export function loadSettings(): GameSettings {
@@ -62,7 +66,11 @@ export function loadSettings(): GameSettings {
         parsed.aiDifficulty === 'hard'
           ? parsed.aiDifficulty
           : DEFAULTS.aiDifficulty;
-      return { grid, playerCount, turnTimer, playerTypes, aiDifficulty };
+      const symbolSet: SymbolSetKey =
+        parsed.symbolSet && parsed.symbolSet in SYMBOL_SETS
+          ? parsed.symbolSet
+          : DEFAULTS.symbolSet;
+      return { grid, playerCount, turnTimer, playerTypes, aiDifficulty, symbolSet };
     }
   } catch {
     // ignore corrupt storage, fall back to defaults

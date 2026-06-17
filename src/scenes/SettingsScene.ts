@@ -9,6 +9,7 @@ import {
   type GameSettings,
   type GridKey,
 } from '../settings';
+import { SYMBOL_SETS, type SymbolSetKey } from '../symbols';
 
 const SELECTED_COLOR = 0x2e8b57;
 const UNSELECTED_COLOR = 0x2d2d4e;
@@ -26,17 +27,17 @@ export class SettingsScene extends Phaser.Scene {
     const { width } = this.scale;
 
     this.add
-      .text(width / 2, 56, 'Settings', {
+      .text(width / 2, 48, 'Settings', {
         fontFamily: 'Georgia, serif',
         fontSize: '48px',
         color: '#ffffff',
       })
       .setOrigin(0.5);
 
-    this.addLabel(120, 'Grid size');
+    this.addLabel(100, 'Grid size');
     const gridKeys = Object.keys(GRIDS) as GridKey[];
     this.addOptionRow(
-      166,
+      144,
       gridKeys.map((key) => GRIDS[key].label),
       gridKeys.indexOf(this.settings.grid),
       (i) => {
@@ -45,10 +46,10 @@ export class SettingsScene extends Phaser.Scene {
       },
     );
 
-    this.addLabel(232, 'Players');
+    this.addLabel(200, 'Players');
     const counts = [2, 3, 4];
     this.addOptionRow(
-      278,
+      244,
       counts.map(String),
       counts.indexOf(this.settings.playerCount),
       (i) => {
@@ -57,13 +58,25 @@ export class SettingsScene extends Phaser.Scene {
       },
     );
 
-    this.addLabel(344, 'Player types — click to toggle');
-    this.addPlayerTypeRow(390);
+    this.addLabel(300, 'Symbol set');
+    const symbolKeys = Object.keys(SYMBOL_SETS) as SymbolSetKey[];
+    this.addOptionRow(
+      344,
+      symbolKeys.map((key) => SYMBOL_SETS[key].label),
+      symbolKeys.indexOf(this.settings.symbolSet),
+      (i) => {
+        this.settings.symbolSet = symbolKeys[i];
+        this.applyAndRefresh();
+      },
+    );
 
-    this.addLabel(456, 'Computer difficulty');
+    this.addLabel(400, 'Player types — click to toggle');
+    this.addPlayerTypeRow(444);
+
+    this.addLabel(500, 'Computer difficulty');
     const difficulties: AiDifficulty[] = ['easy', 'medium', 'hard'];
     this.addOptionRow(
-      502,
+      544,
       ['Easy', 'Medium', 'Hard'],
       difficulties.indexOf(this.settings.aiDifficulty),
       (i) => {
@@ -72,9 +85,9 @@ export class SettingsScene extends Phaser.Scene {
       },
     );
 
-    this.addLabel(568, 'Turn time limit');
+    this.addLabel(600, 'Turn time limit');
     this.addOptionRow(
-      614,
+      644,
       ['Off', `On (${TURN_SECONDS}s)`],
       this.settings.turnTimer ? 1 : 0,
       (i) => {
@@ -83,7 +96,7 @@ export class SettingsScene extends Phaser.Scene {
       },
     );
 
-    new Button(this, width / 2, 706, 'Back', () => {
+    new Button(this, width / 2, 712, 'Back', () => {
       this.scene.start('MainMenu');
     });
   }
