@@ -57,6 +57,14 @@ export class Card extends Phaser.GameObjects.Container {
     return this.flipping;
   }
 
+  /** Sets the face instantly, without the flip animation. */
+  setFace(faceUp: boolean): void {
+    this.faceUp = faceUp;
+    this.front.setVisible(faceUp);
+    this.symbolText.setVisible(faceUp);
+    this.back.setVisible(!faceUp);
+  }
+
   /** Tween-flips the card; resolves when the animation finishes. */
   flip(faceUp: boolean, duration = 130): Promise<void> {
     if (this.faceUp === faceUp || this.flipping) {

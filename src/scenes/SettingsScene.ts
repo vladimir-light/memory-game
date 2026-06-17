@@ -1,6 +1,13 @@
 import Phaser from 'phaser';
 import { Button } from '../ui';
-import { GRIDS, loadSettings, saveSettings, type GameSettings, type GridKey } from '../settings';
+import {
+  GRIDS,
+  loadSettings,
+  saveSettings,
+  TURN_SECONDS,
+  type GameSettings,
+  type GridKey,
+} from '../settings';
 
 const SELECTED_COLOR = 0x2e8b57;
 const UNSELECTED_COLOR = 0x2d2d4e;
@@ -17,17 +24,17 @@ export class SettingsScene extends Phaser.Scene {
     const { width, height } = this.scale;
 
     this.add
-      .text(width / 2, height * 0.15, 'Settings', {
+      .text(width / 2, height * 0.11, 'Settings', {
         fontFamily: 'Georgia, serif',
         fontSize: '56px',
         color: '#ffffff',
       })
       .setOrigin(0.5);
 
-    this.addLabel(width / 2, height * 0.32, 'Grid size');
+    this.addLabel(width / 2, height * 0.24, 'Grid size');
     const gridKeys = Object.keys(GRIDS) as GridKey[];
     this.addOptionRow(
-      height * 0.4,
+      height * 0.31,
       gridKeys.map((key) => GRIDS[key].label),
       gridKeys.indexOf(this.settings.grid),
       (i) => {
@@ -36,10 +43,10 @@ export class SettingsScene extends Phaser.Scene {
       },
     );
 
-    this.addLabel(width / 2, height * 0.54, 'Players');
+    this.addLabel(width / 2, height * 0.43, 'Players');
     const counts = [2, 3, 4];
     this.addOptionRow(
-      height * 0.62,
+      height * 0.5,
       counts.map(String),
       counts.indexOf(this.settings.playerCount),
       (i) => {
@@ -48,7 +55,18 @@ export class SettingsScene extends Phaser.Scene {
       },
     );
 
-    new Button(this, width / 2, height * 0.82, 'Back', () => {
+    this.addLabel(width / 2, height * 0.62, 'Turn time limit');
+    this.addOptionRow(
+      height * 0.69,
+      ['Off', `On (${TURN_SECONDS}s)`],
+      this.settings.turnTimer ? 1 : 0,
+      (i) => {
+        this.settings.turnTimer = i === 1;
+        this.applyAndRefresh();
+      },
+    );
+
+    new Button(this, width / 2, height * 0.85, 'Back', () => {
       this.scene.start('MainMenu');
     });
   }

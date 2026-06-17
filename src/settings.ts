@@ -12,9 +12,14 @@ export const GRIDS: Record<GridKey, GridSpec> = {
   '6x6': { rows: 6, cols: 6, label: '6 × 6' },
 };
 
+/** Turn time limit in seconds when the turn timer is enabled. */
+export const TURN_SECONDS = 5;
+
 export interface GameSettings {
   grid: GridKey;
   playerCount: number;
+  /** When true, each turn is limited to TURN_SECONDS; timeout passes the turn. */
+  turnTimer: boolean;
 }
 
 const STORAGE_KEY = 'memory-phaser-settings';
@@ -22,6 +27,7 @@ const STORAGE_KEY = 'memory-phaser-settings';
 const DEFAULTS: GameSettings = {
   grid: '4x6',
   playerCount: 2,
+  turnTimer: false,
 };
 
 export function loadSettings(): GameSettings {
@@ -34,7 +40,9 @@ export function loadSettings(): GameSettings {
         typeof parsed.playerCount === 'number' && parsed.playerCount >= 2 && parsed.playerCount <= 4
           ? parsed.playerCount
           : DEFAULTS.playerCount;
-      return { grid, playerCount };
+      const turnTimer =
+        typeof parsed.turnTimer === 'boolean' ? parsed.turnTimer : DEFAULTS.turnTimer;
+      return { grid, playerCount, turnTimer };
     }
   } catch {
     // ignore corrupt storage, fall back to defaults
