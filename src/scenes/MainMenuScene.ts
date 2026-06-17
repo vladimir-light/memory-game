@@ -40,5 +40,14 @@ export class MainMenuScene extends Phaser.Scene {
       // browsers usually block window.close() for tabs they didn't open
       exitMsg.setText('You can close this browser tab now.');
     });
+
+    // hidden dev entry into the texture sandbox (stripped from production builds)
+    if (import.meta.env.DEV) {
+      new Button(this, width - 110, height - 36, '🛠 Playground', () => this.scene.start('Playground'), {
+        width: 180,
+        height: 40,
+        fontSize: 16,
+      });
+    }
   }
 }
