@@ -6,9 +6,7 @@
 
 
 ## Demo
-<video width="800" height="640" controls>
-  <source src="demo_30fps.webm" type="video/mp4">
-</video>
+[demo_30fps.webm](https://github.com/user-attachments/assets/5c3f0b58-866c-4452-b281-4e7f26048a87)
 
 ## Run
 
