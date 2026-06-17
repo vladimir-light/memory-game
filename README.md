@@ -1,13 +1,21 @@
-# Memory (Phaser 3 + TypeScript)
+# Memory-Game (PhaserJS v3.90)
 
-Turn-based memory card game. No external assets — all card textures are generated procedurally at runtime.
+> This was completely vibe-coded (using Claude Fabel 5, btw.) 
+> You even may see all the promts I used in PROMT_HISTORY.md. 
+> Fun fact: Initial promt contains a mistake. I said I need a 5x5 grid (25 cards which makes no sense), but claude spotted this right away and made some suggestions (a joker card, a triplet or 6x4 grid)
+
+
+## Demo
+<video width="800" height="640" controls>
+  <source src="demo_30fps.webm" type="video/mp4">
+</video>
 
 ## Run
 
 ```bash
-npm install
-npm run dev      # dev server (Vite)
-npm run build    # type-check + production build into dist/
+pnpm install      # or `npm install` -> install deps
+pnpm run dev      # or `npm run dev` -> start dev-server
+pnpm run build    # or `npm run build` -> type-check + production build into dist/
 ```
 
 ## Rules
