@@ -22,12 +22,15 @@ npm run build    # type-check + production build into dist/
 
 - Grid: 4×4, 4×6 (default), 6×6 — persisted in localStorage.
 - Turn time limit: Off (default) or 5 s per turn (`TURN_SECONDS` in `src/settings.ts`); the countdown is shown bottom-left and a timeout passes the turn.
-- Players: 2–4 (all human for now; `PlayerType` in `src/Player.ts` and the hook in
-  `GameScene.startTurn()` are the entry points for future computer opponents).
+- Players: 2–4, each slot toggleable between Human and CPU (any mix, including all-CPU).
+- Computer difficulty: Easy / Medium / Hard — controls how reliably CPUs memorize revealed
+  cards and how fast they forget (`AI_PROFILES` in `src/Ai.ts`). CPUs watch every reveal,
+  including the initial 5-second preview and other players' turns, and never skip.
 
 ## Structure
 
 - `src/scenes/` — `PreloadScene` (procedural textures, future asset loading), `MainMenuScene`, `SettingsScene`, `GameScene` (turn logic).
+- `src/Ai.ts` — computer opponent: imperfect decaying card memory, plays via the same GameScene entry points as humans.
 - `src/Card.ts` — card container with flip animation.
 - `src/textures.ts` — canvas-generated card faces (noise fronts) and back (linear gradient, one random pair per game from `src/gradients.ts`).
 - `src/symbols.ts` — emoji pool used as card symbols.

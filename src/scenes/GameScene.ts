@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { AI_PROFILES, AiController } from '../Ai';
 import { Card, CARD_CLICKED } from '../Card';
 import { Player, PLAYER_COLORS } from '../Player';
 import { BACK_GRADIENTS } from '../gradients';
@@ -11,6 +12,8 @@ type Phase = 'await-start' | 'memorize' | 'turn-idle' | 'turn-pick' | 'resolving
 
 const MEMORIZE_SECONDS = 5;
 const MISMATCH_SHOW_MS = 900;
+const AI_FIRST_PICK_MS = 800;
+const AI_SECOND_PICK_MS = 900;
 const CARD_ASPECT = CARD_TEX_W / CARD_TEX_H;
 
 const HUD_TOP = 16;
@@ -37,6 +40,7 @@ export class GameScene extends Phaser.Scene {
   private turnTimerEnabled = false;
   private turnTimeLeft = 0;
   private turnTimerEvent?: Phaser.Time.TimerEvent;
+  private aiControllers = new Map<Player, AiController>();
 
   constructor() {
     super('Game');
@@ -57,9 +61,15 @@ export class GameScene extends Phaser.Scene {
     const gradient = Phaser.Utils.Array.GetRandom([...BACK_GRADIENTS]);
     createBackTexture(this, gradient);
 
+    this.aiControllers.clear();
     for (let i = 0; i < settings.playerCount; i++) {
-      // all human for now; PlayerType 'computer' is the hook for future AI opponents
-      this.players.push(new Player(i, `Player ${i + 1}`, 'human', PLAYER_COLORS[i]));
+      const type = settings.playerTypes[i];
+      const name = type === 'computer' ? `CPU ${i + 1}` : `Player ${i + 1}`;
+      const player = new Player(i, name, type, PLAYER_COLORS[i]);
+      this.players.push(player);
+      if (type === 'computer') {
+        this.aiControllers.set(player, new AiController(AI_PROFILES[settings.aiDifficulty]));
+      }
     }
 
     this.createBoard(GRIDS[settings.grid].rows, GRIDS[settings.grid].cols);
@@ -237,6 +247,11 @@ export class GameScene extends Phaser.Scene {
   // ── memorize phase ───────────────────────────────────────────────────
 
   private startMemorizePhase(): void {
+    // computer players try to memorize the open board, just like humans do
+    for (const ai of this.aiControllers.values()) {
+      this.cards.forEach((card) => ai.observe(card, true));
+    }
+
     let remaining = MEMORIZE_SECONDS;
     this.msgText.setText(`Memorize the cards! ${remaining}`);
     this.time.addEvent({
@@ -270,15 +285,43 @@ export class GameScene extends Phaser.Scene {
   private startTurn(): void {
     this.phase = 'turn-idle';
     this.firstPick = null;
-    this.skipBtn.setEnabled(true);
     this.updateHud();
-    this.msgText.setText(`${this.activePlayer.name}: pick a card or skip your turn`);
     this.resetTurnTimer();
 
     if (this.activePlayer.type === 'computer') {
-      // TODO: future AI opponents hook in here — drive the turn through the
-      // same entry points a human uses: onCardClicked(card) / onSkip().
+      this.skipBtn.setEnabled(false);
+      this.msgText.setText(`${this.activePlayer.name} is thinking…`);
+      this.aiControllers.get(this.activePlayer)?.startTurn();
+      this.runAiTurn();
+    } else {
+      this.skipBtn.setEnabled(true);
+      this.msgText.setText(`${this.activePlayer.name}: pick a card or skip your turn`);
     }
+  }
+
+  /** Drives a computer player's turn through the same entry points a human uses. */
+  private runAiTurn(): void {
+    const player = this.activePlayer;
+    const ai = this.aiControllers.get(player);
+    if (!ai) {
+      return;
+    }
+    const facedown = () => this.cards.filter((c) => !c.matched && !c.isFaceUp && !c.isFlipping);
+
+    this.time.delayedCall(AI_FIRST_PICK_MS, () => {
+      if (this.phase !== 'turn-idle' || this.activePlayer !== player) {
+        return; // a timeout (or restart) intervened
+      }
+      const first = ai.chooseFirst(facedown());
+      this.onCardClicked(first, true);
+
+      this.time.delayedCall(AI_SECOND_PICK_MS, () => {
+        if (this.phase !== 'turn-pick' || this.activePlayer !== player || !first.isFaceUp) {
+          return;
+        }
+        this.onCardClicked(ai.chooseSecond(first, facedown()), true);
+      });
+    });
   }
 
   private onSkip(): void {
@@ -288,12 +331,20 @@ export class GameScene extends Phaser.Scene {
     this.nextPlayer();
   }
 
-  private onCardClicked(card: Card): void {
+  private onCardClicked(card: Card, fromAi = false): void {
     if (this.phase !== 'turn-idle' && this.phase !== 'turn-pick') {
       return;
     }
+    if (this.activePlayer.type === 'computer' && !fromAi) {
+      return; // humans can't play during a computer's turn
+    }
     if (card.matched || card.isFaceUp || card.isFlipping) {
       return;
+    }
+
+    // every reveal is public — all computer players may memorize it
+    for (const ai of this.aiControllers.values()) {
+      ai.observe(card);
     }
 
     if (this.phase === 'turn-idle') {
@@ -316,6 +367,10 @@ export class GameScene extends Phaser.Scene {
       this.activePlayer.pairs++;
       first.setMatched(this.activePlayer.color);
       second.setMatched(this.activePlayer.color);
+      for (const ai of this.aiControllers.values()) {
+        ai.forget(first);
+        ai.forget(second);
+      }
       this.updateHud();
 
       if (this.cards.every((c) => c.matched)) {
@@ -324,8 +379,13 @@ export class GameScene extends Phaser.Scene {
         this.msgText.setText(`${this.activePlayer.name} found a pair — go again!`);
         this.phase = 'turn-idle';
         this.firstPick = null;
-        this.skipBtn.setEnabled(true);
         this.resetTurnTimer();
+        if (this.activePlayer.type === 'computer') {
+          this.skipBtn.setEnabled(false);
+          this.runAiTurn();
+        } else {
+          this.skipBtn.setEnabled(true);
+        }
       }
     } else {
       this.msgText.setText('No match!');
