@@ -1,0 +1,4 @@
+# Supply-chain hardening: refuse to install any package version younger than
+# 7 days (10080 minutes), giving the community time to detect and yank
+# malicious releases before they reach a build. Requires pnpm >= 10.16.
+minimumReleaseAge: 10080
