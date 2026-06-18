@@ -25,6 +25,7 @@ const BOARD_TOP = MSG_Y + 30;
 
 interface PlayerPanel {
   bg: Phaser.GameObjects.Rectangle;
+  name: Phaser.GameObjects.Text;
   score: Phaser.GameObjects.Text;
 }
 
@@ -138,7 +139,7 @@ export class GameScene extends Phaser.Scene {
       const x = startX + i * (panelW + gap);
       const y = HUD_TOP + PANEL_H / 2;
       const bg = this.add.rectangle(x, y, panelW, PANEL_H, 0x23233c).setStrokeStyle(2, 0x44446a);
-      this.add
+      const name = this.add
         .text(x, y - 14, player.name, {
           fontFamily: 'Arial, sans-serif',
           fontSize: '18px',
@@ -153,7 +154,7 @@ export class GameScene extends Phaser.Scene {
           color: '#ffffff',
         })
         .setOrigin(0.5);
-      this.panels.push({ bg, score });
+      this.panels.push({ bg, name, score });
     });
 
     this.msgText = this.add
@@ -468,13 +469,18 @@ export class GameScene extends Phaser.Scene {
   private updateHud(): void {
     this.panels.forEach((panel, i) => {
       panel.score.setText(`Pairs: ${this.players[i].pairs}`);
-      if (i === this.activeIdx && this.phase !== 'gameover') {
+      const isActive = i === this.activeIdx && this.phase !== 'gameover';
+      if (isActive) {
         panel.bg.setStrokeStyle(3, this.players[i].color);
         panel.bg.setFillStyle(0x32325a);
       } else {
         panel.bg.setStrokeStyle(2, 0x44446a);
         panel.bg.setFillStyle(0x23233c);
       }
+      // reinforce the active player on the name itself: full and slightly larger
+      // when it's their turn, dimmed otherwise
+      panel.name.setAlpha(isActive ? 1 : 0.5);
+      panel.name.setScale(isActive ? 1.25 : 1);
     });
   }
 
