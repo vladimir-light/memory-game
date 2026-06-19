@@ -14,7 +14,7 @@ const game = new Phaser.Game({
   height: GAME_HEIGHT,
   backgroundColor: '#1a1a2e',
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.EXPAND,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
   scene: [PreloadScene, MainMenuScene, SettingsScene, GameScene],
