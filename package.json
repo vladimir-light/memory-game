@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "pnpm run build && wrangler dev",
+    "deploy": "pnpm run build && wrangler deploy"
   },
   "packageManager": "pnpm@10.34.3",
   "engines": {
@@ -16,8 +17,10 @@
     "phaser": "^3.90.0"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.40.1",
     "lil-gui": "^0.21.0",
     "typescript": "^6.0.2",
-    "vite": "^8.0.8"
+    "vite": "^8.0.8",
+    "wrangler": "^4.99.0"
   }
 }
